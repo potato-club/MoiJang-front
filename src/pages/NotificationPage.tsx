@@ -13,7 +13,6 @@ const NotificationPage = () => {
         <button onClick={handleBack} className="text-xl mr-4">⬅️</button>
         <div>
           <h1 className="text-xl font-bold text-gray-800">알림</h1>
-          <p className="text-xs text-gray-400">방 초대, 친구 추가 수락 and 거절</p>
         </div>
       </header>
 
@@ -22,8 +21,8 @@ const NotificationPage = () => {
         <section>
           <h2 className="text-sm font-semibold text-gray-500 mb-3 ml-1">어제</h2>
           <div className="space-y-3">
-            <NotificationItem text="소영 님이 친구 추가를..." type="accept" />
-            <NotificationItem text="감자 방에 초대 요청이.." type="accept" />
+            <NotificationItem text="길동 님이 친구 추가를 보냈습니다" type="accept" />
+            <NotificationItem text="감자 방에 초대 요청이 왔습니다" type="accept" />
           </div>
         </section>
 
@@ -32,7 +31,7 @@ const NotificationPage = () => {
           <h2 className="text-sm font-semibold text-gray-500 mb-3 ml-1">최근 7일</h2>
           <div className="space-y-3">
             <NotificationItem text="고구마 수락 완료 창" type="check" />
-            <NotificationItem text="고구마 님이 친구 추가를..." type="accept" />
+            <NotificationItem text="고구마 님이 친구 추가를 보냈습니다" type="accept" />
           </div>
         </section>
       </main>

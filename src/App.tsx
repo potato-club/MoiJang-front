@@ -18,6 +18,7 @@ import MainPage from './pages/MainPage';
 // import 경로는 파일 이름과 정확히 일치해야 해!
 import NotificationPage from './pages/NotificationPage'; 
 import MyPage from './pages/MyPage';
+import RoomCreatePage from './pages/RoomCreatePage';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/main" element={<MainPage />} />
         <Route path="/notifications" element={<NotificationPage />} />
         <Route path="/mypage" element={<MyPage />} />
+        <Route path="/room-create" element={<RoomCreatePage />} />
       </Routes>
     </BrowserRouter>
   );
