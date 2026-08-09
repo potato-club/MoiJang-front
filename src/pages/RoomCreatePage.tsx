@@ -5,145 +5,224 @@ import { createTeam } from '../api/teamApi';
 const RoomCreatePage = () => {
   const navigate = useNavigate();
 
-  // 1. 입력 폼 상태 관리 (UI 입력값 저장용)
-  const [teamName, setTeamName] = useState('');
-  const [maxMembers, setMaxMembers] = useState('');
-  const [roomType, setRoomType] = useState('single'); // 'single' (단일) or 'regular' (정기)
-  const [isPrivate, setIsPrivate] = useState(false); // 공개/비공개 선택
+  // 폼 입력 상태
+  const [roomName, setRoomName] = useState('');
+  const [maxMembers, setMaxMembers] = useState(4);
+  const [scheduleType, setScheduleType] = useState<'단기 일정' | '정기 일정'>('단기 일정');
+  const [nickname, setNickname] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 2. 방 생성 폼 제출 핸들러
-  const handleCreateTeam = async (e: React.FormEvent) => {
+  // 방 생성 제출
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!teamName.trim()) {
-      alert('방 이름을 입력해 주세요!');
+    if (!roomName.trim()) {
+      alert('방 이름을 입력해주세요.');
       return;
     }
 
-    if (isPrivate && !password.trim()) {
-      alert('비공개 방은 비밀번호 입력이 필수입니다!');
+    if (!nickname.trim()) {
+      alert('닉네임을 입력해주세요.');
+      return;
+    }
+
+    if (!isPublic && !password.trim()) {
+      alert('비공개 방은 비밀번호 입력이 필요합니다.');
       return;
     }
 
     setLoading(true);
 
     try {
-      // teamApi.ts의 createTeam 함수 호출!
       const result = await createTeam({
-        name: teamName,
-        password: isPrivate ? password : undefined,
+        name: roomName,
+        password: isPublic ? undefined : password,
       });
 
-      console.log('팀 생성 성공:', result);
-      alert(`'${result.name}' 방이 성공적으로 생성되었습니다!`);
-
-      // 생성 완료 후 메인 페이지로 이동
+      console.log('방 생성 성공:', result);
+      alert(`'${roomName}' 방이 성공적으로 생성되었습니다!`);
       navigate('/main');
     } catch (error: any) {
-      console.error('팀 생성 실패:', error);
-      alert(error?.response?.data?.errorMessage || '방 개설에 실패했습니다.');
+      console.error('방 생성 실패:', error);
+      alert(error?.response?.data?.errorMessage || '방 생성 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      {/* 상단 헤더 */}
-      <header className="max-w-md mx-auto mb-8">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="text-xl p-2 hover:bg-gray-200 rounded-lg transition"
-        >
-          ⬅️
-        </button>
-      </header>
-
-      {/* 방 생성 폼 */}
-      <main className="max-w-md mx-auto">
-        <form onSubmit={handleCreateTeam} className="space-y-4">
-          
-          {/* 방 이름 (백엔드 name 필드와 연결) */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1 ml-1">방 이름 *</label>
-            <input
-              type="text"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              placeholder="방 이름"
-              className="w-full p-4 border border-gray-300 rounded-xl outline-none focus:border-orange-500 text-gray-800 bg-white"
-            />
-          </div>
-
-          {/* 최대 인원 수 (UI용) */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1 ml-1">최대 인원 수</label>
-            <input
-              type="number"
-              placeholder="최대 인원 수"
-              className="w-full p-4 border border-gray-300 rounded-xl outline-none focus:border-orange-500 text-gray-800 bg-white"
-            />
-          </div>
-
-          {/* 방 종류 (UI용) */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1 ml-1">방 종류</label>
-            <select className="w-full p-4 border border-gray-300 rounded-xl outline-none text-gray-700 bg-white">
-              <option value="single">단일 일정</option>
-              <option value="regular">정기 일정</option>
-            </select>
-          </div>
-
-          {/* 닉네임 (UI용) */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1 ml-1">내 닉네임</label>
-            <input
-              type="text"
-              placeholder="내 닉네임"
-              className="w-full p-4 border border-gray-300 rounded-xl outline-none focus:border-orange-500 text-gray-800 bg-white"
-            />
-          </div>
-
-          {/* 공개 / 비공개 선택 */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1 ml-1">공개 여부</label>
-            <select
-              value={isPrivate ? 'private' : 'public'}
-              onChange={(e) => setIsPrivate(e.target.value === 'private')}
-              className="w-full p-4 border border-gray-300 rounded-xl outline-none text-gray-700 bg-white"
+    <div className="min-h-screen bg-white flex flex-col justify-between max-w-md mx-auto px-6 py-6 font-sans relative z-10">
+      {/* 폼 전체를 form 태그로 감싸 이벤트 및 입력 정상 작동 보장 */}
+      <form onSubmit={handleSubmit} className="flex flex-col justify-between min-h-full flex-1">
+        <div>
+          {/* 상단 헤더 */}
+          <div className="flex items-center justify-between py-2 mb-6">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="text-gray-700 hover:text-black transition p-1"
             >
-              <option value="public">공개 방</option>
-              <option value="private">비공개 방 (비밀번호 설정)</option>
-            </select>
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <h1 className="text-lg font-bold text-gray-900">방 생성</h1>
+            <div className="w-6" />
           </div>
 
-          {/* 비공개 선택시에만 비밀번호 입력창 표시 (백엔드 password 필드와 연결) */}
-          {isPrivate && (
+          <div className="space-y-6">
+            {/* 1. 방 이름 (입력 가능하도록 활성화 및 텍스트 색상 명확화) */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1 ml-1">방 비밀번호 *</label>
+              <label htmlFor="roomName" className="block text-sm font-semibold text-gray-800 mb-2">
+                방 이름
+              </label>
               <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="방 비밀번호 입력"
-                className="w-full p-4 border border-gray-300 rounded-xl outline-none focus:border-orange-500 text-gray-800 bg-white"
+                id="roomName"
+                type="text"
+                placeholder="방 이름을 입력해주세요."
+                value={roomName}
+                onChange={(e) => setRoomName(e.target.value)}
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 placeholder-gray-400 transition"
+                autoComplete="off"
               />
             </div>
-          )}
 
-          {/* 생성 버튼 */}
+            {/* 2. 인원 선택 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
+                인원 선택
+              </label>
+              <div className="grid grid-cols-7 gap-2">
+                {[2, 3, 4, 5, 6, 7, 8].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => setMaxMembers(num)}
+                    className={`py-3 rounded-xl border text-sm font-medium transition ${
+                      maxMembers === num
+                        ? 'border-green-500 text-green-600 bg-green-50 font-bold'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. 방 종류 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
+                방 종류
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {(['단기 일정', '정기 일정'] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setScheduleType(type)}
+                    className={`py-3.5 rounded-xl border text-sm font-medium transition ${
+                      scheduleType === type
+                        ? 'border-green-500 text-green-600 bg-green-50 font-bold'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 4. 닉네임 (입력 가능하도록 활성화) */}
+            <div>
+              <label htmlFor="nickname" className="block text-sm font-semibold text-gray-800 mb-2">
+                닉네임
+              </label>
+              <input
+                id="nickname"
+                type="text"
+                placeholder="닉네임을 입력해주세요."
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 placeholder-gray-400 transition"
+                autoComplete="off"
+              />
+            </div>
+
+            {/* 5. 공개 설정 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
+                공개 설정
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsPublic(true)}
+                  className={`py-3.5 rounded-xl border text-sm font-medium transition ${
+                    isPublic
+                      ? 'border-green-500 text-green-600 bg-green-50 font-bold'
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  공개
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsPublic(false)}
+                  className={`py-3.5 rounded-xl border text-sm font-medium transition ${
+                    !isPublic
+                      ? 'border-green-500 text-green-600 bg-green-50 font-bold'
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  비공개
+                </button>
+              </div>
+            </div>
+
+            {/* 6. 비공개 설정 시 나타나는 방 비밀번호 입력창 (활성화 완료) */}
+            {!isPublic && (
+              <div className="pt-1 relative z-20">
+                <label htmlFor="roomPassword" className="block text-sm font-semibold text-gray-800 mb-2">
+                  방 비밀번호
+                </label>
+                <input
+                  id="roomPassword"
+                  type="password"
+                  placeholder="비밀번호를 입력해주세요."
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 placeholder-gray-400 transition"
+                  autoComplete="new-password"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 하단 생성 버튼 */}
+        <div className="pt-8 pb-2">
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-orange-500 text-white py-4 rounded-xl font-bold text-lg shadow-md hover:bg-orange-600 transition active:scale-95 disabled:bg-gray-300 mt-8"
+            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl font-bold text-base shadow-sm transition active:scale-[0.99] disabled:opacity-50 cursor-pointer"
           >
-            {loading ? '방 생성 중...' : '방 생성'}
+            {loading ? '생성 중...' : '생성하기'}
           </button>
-
-        </form>
-      </main>
+        </div>
+      </form>
     </div>
   );
 };
