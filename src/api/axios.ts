@@ -6,19 +6,20 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // HttpOnly 쿠키 전송을 위해 필수 설정
+  // 요청 시 브라우저가 쿠키(Set-Cookie로 받은 토큰)를 백엔드로 자동 포함하여 전송하도록 설정
+  withCredentials: true,
 });
 
-// 2. 요청 인터셉터 (Request Interceptor) 설정 - 백엔드로 요청을 보낼 때마다 자동으로 토큰을 실어주는 가로채기 로직
-apiClient.interceptors.request.use(
-  (config) => {
-    // localStorage에서 저장된 JWT 토큰 꺼내기
-    const token = localStorage.getItem('accessToken');
-
-    // 토큰이 존재할 경우 요청 헤더의 Authorization 필드에 Bearer 토큰 주입
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+// 2. 필요 시 응답 인터셉터 (Response Interceptor) 설정
+// (인증 만료 등 401 에러 발생 시 로그인 페이지로 이동시키는 예외 처리 용도)
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // 401 Unauthorized 에러 시 처리 (예: 로그인 페이지로 이동)
+      // window.location.href = '/';
     }
-    return config;
-  },
-  (error) => Promise.reject(error) // 요청 전 에러가 발생한 경우 처리
+    return Promise.reject(error);
+  }
 );
