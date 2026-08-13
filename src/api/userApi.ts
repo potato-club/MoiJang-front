@@ -8,9 +8,7 @@ export interface UserProfileResponse {
   profileImageUrl?: string;
 }
 
-/**
- * [GET] 내 프로필 정보 조회
- */
+// [GET] 내 프로필 정보 조회
 export const getMyProfile = async () => {
   // GET /api/v1/users/me
   const response = await apiClient.get<{ data: UserProfileResponse; message: string }>(

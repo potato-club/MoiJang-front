@@ -6,9 +6,9 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
   // HttpOnly 쿠키 전송을 위해 필수 설정
   // 요청 시 브라우저가 쿠키(Set-Cookie로 받은 토큰)를 백엔드로 자동 포함하여 전송하도록 설정
-  withCredentials: true,
 });
 
 // 2. 필요 시 응답 인터셉터 (Response Interceptor) 설정

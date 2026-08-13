@@ -2,26 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
-  const navigate = useNavigate(); //백엔드 연결 전까지 테스트용으로 바로 메인화면으로 이동
-  
-  /*const [searchParams] = useSearchParams(); 
-  useSearchParams -> 백엔드가 구글 인가를 마치고 프론트를 리다이렉트시킬 때, URL 쿼리 파라미터에 실려오는 토큰을 읽음
-  
-  1.백엔드에서 리다이렉트되어 돌아왔을 때 URL의 토큰을 감지하고 처리하는 로직
-  useEffect(() => {
-    const token = searchParams.get('token'); //URL 쿼리 파라미터에서 토큰 값 추출 (?token=...) 
-    ***구글 인증 완료 시 백엔드가 프론트로 리다이렉트 시키는 URL파라미터명이 ?token= 이 맞는지 확인 필요***
-    ***token인지 accessToken인지 확인 필요***
-   
-    if (token) {
-      받아온 토큰을 로컬 스토리지에 보관
-      localStorage.setItem('accessToken', token);
-        
-      토큰 보관 후 곧바로 메인 페이지로 이동
-      navigate('/main', { replace: true });
-    }
-  }, [searchParams, navigate]);
-  */
+  const navigate = useNavigate();
  
   //2.구글 로그인 버튼 클릭 핸들러
   const handleGoogleLogin = () => {
@@ -36,9 +17,9 @@ const LoginPage = () => {
       
       {/* 타이틀 영역 */}
       <div className="mb-12 text-center">
-        <h1 className="text-4xl font-bold text-blue-600 mb-2">MOIJANG</h1>
+        <h1 className="text-4xl font-bold text-blue-600 mb-2">모이장</h1>
         <p className="text-gray-500">
-          모이장으로 모이장</p>
+          간편하고 쉬운 일정 조율</p>
       </div>
 
       {/* 로그인 버튼 영역 */}

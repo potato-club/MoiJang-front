@@ -211,12 +211,33 @@ const MainPage = () => {
         
         {/* 상단 헤더 */}
         <header className="flex justify-between items-center mb-6">
-          <button
+          {/* 📌 [수정된 프로필 UI] 좌측 프로필 및 내 정보 보기 영역 */}
+          <div 
             onClick={handleProfile}
-            className="text-xl font-bold text-gray-800 hover:text-orange-500 transition"
+            className="flex items-center gap-3 cursor-pointer p-1 pr-3 rounded-2xl hover:bg-gray-100/80 transition active:scale-95"
           >
-            내 정보
-          </button>
+            {/* 프로필 이미지 아이콘 */}
+            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 shrink-0 border border-orange-200">
+              <svg 
+                className="w-6 h-6 text-orange-400" 
+                fill="currentColor" 
+                viewBox="0 0 20 20"
+              >
+                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              </svg>
+            </div>
+
+            {/* 이름, 안내 텍스트, 화살표 */}
+            <div className="flex flex-col text-left">
+              <span className="text-sm font-bold text-gray-800 flex items-center gap-0.5 leading-tight">
+                김모이
+                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                </svg>
+              </span>
+              <span className="text-[11px] text-gray-400 mt-0.5">내 정보 보기</span>
+            </div>
+          </div>
 
           <div className="flex gap-2">
             <button
