@@ -1,5 +1,3 @@
-
-import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import MainPage from './pages/MainPage';
@@ -8,6 +6,7 @@ import NotificationPage from './pages/NotificationPage';
 import RoomCreatePage from './pages/RoomCreatePage';
 import RoomJoinPage from './pages/RoomJoinPage';
 import FriendsPage from './pages/FriendsPage';
+import ScheduleCreatePage from './pages/ScheduleCreatePage';
 
 function App() {
   return (
@@ -21,6 +20,7 @@ function App() {
         <Route path="/room-create" element={<RoomCreatePage />} />
         <Route path="/room-join/:roomId" element={<RoomJoinPage />} />
         <Route path="/friends" element={<FriendsPage />} />
+        <Route path="/schedule-create" element={<ScheduleCreatePage />} />
       </Routes>
     </BrowserRouter>
   );

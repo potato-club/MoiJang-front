@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMonthSchedules, type ScheduleResponse } from '../api/scheduleApi';
 
@@ -10,7 +10,7 @@ const DUMMY_SCHEDULES: ScheduleResponse[] = [
     content: '화상 회의 진행 (Google Meet)',
     startDate: '2026-08-10T14:00:00',
     endDate: '2026-08-10T16:00:00',
-    color: '#F97316',
+    color: '#27D55B',
   },
   {
     id: 102,
@@ -18,7 +18,7 @@ const DUMMY_SCHEDULES: ScheduleResponse[] = [
     content: 'OAuth2 및 DB 구조 검토',
     startDate: '2026-08-12T19:00:00',
     endDate: '2026-08-12T21:00:00',
-    color: '#3B82F6',
+    color: '#27D55B',
   },
   {
     id: 103,
@@ -26,7 +26,7 @@ const DUMMY_SCHEDULES: ScheduleResponse[] = [
     content: 'PPT 자료 및 시연 시나리오 정리',
     startDate: '2026-08-13T10:00:00',
     endDate: '2026-08-13T12:00:00',
-    color: '#10B981',
+    color: '#27D55B',
   },
   {
     id: 104,
@@ -34,7 +34,7 @@ const DUMMY_SCHEDULES: ScheduleResponse[] = [
     content: '컴포넌트 리팩토링',
     startDate: '2026-08-15T16:00:00',
     endDate: '2026-08-15T18:00:00',
-    color: '#F97316',
+    color: '#27D55B',
   },
 ];
 
@@ -54,20 +54,21 @@ const MainPage = () => {
 
   // 3. 서버/임시 일정 데이터
   const [schedules, setSchedules] = useState<ScheduleResponse[]>(DUMMY_SCHEDULES);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
 
   // 4. 선택된 날짜 관리 (클릭 시 토글)
   const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null);
 
   // 헤더 버튼 핸들러
   const handleProfile = () => navigate('/mypage');
-  const handleRefresh = () => window.location.reload();
+  //const handleRefresh = () => window.location.reload();
   const handleNotification = () => navigate('/notifications');
   const handleAddRoom = () => navigate('/room-create');
+  //const handleScheduleCreate = () => navigate('/schedule-create', { state: { date: selectedDateStr } });
 
   // 일정 추가 버튼 클릭 핸들러
   const handleAddSchedule = () => {
-    alert(`${selectedDateStr} 날짜에 새 일정을 추가하는 기능이야!`);
+    navigate('/schedule-create', { state: { date: selectedDateStr } });
   };
 
   // 이전 / 다음 월/주 이동
@@ -112,7 +113,7 @@ const MainPage = () => {
           setSchedules(DUMMY_SCHEDULES);
         }
       } catch (error) {
-        console.warn('백엔드 미연동 상태: 임시(더미) 데이터를 사용합니다.');
+        console.warn('백엔드 미연동 상태: 임시(더미) 데이터를 사용합니다.', error);
         setSchedules(DUMMY_SCHEDULES);
       } finally {
         setLoading(false);
@@ -173,16 +174,16 @@ const MainPage = () => {
           onClick={() => handleDateClick(dateString)}
           className={`h-12 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition active:scale-95 ${
             isSelected
-              ? 'bg-orange-100/80 ring-2 ring-orange-400'
+              ? 'bg-green-100/80 ring-2 ring-[#27D55B]'
               : 'hover:bg-gray-100/60'
           }`}
         >
           <span
             className={`w-7 h-7 flex items-center justify-center rounded-full text-xs font-semibold ${
               isToday
-                ? 'bg-orange-500 text-white font-bold shadow-xs'
+                ? 'bg-[#27D55B] text-white font-bold shadow-xs'
                 : isSelected
-                ? 'text-orange-600 font-bold'
+                ? 'text-[#27D55B] font-bold'
                 : 'text-gray-700'
             }`}
           >
@@ -193,7 +194,7 @@ const MainPage = () => {
             {hasSchedule && (
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  isSelected ? 'bg-orange-600' : 'bg-orange-500'
+                  isSelected ? 'bg-[#27D55B]' : 'bg-[#27D55B]'
                 }`}
               />
             )}
@@ -211,46 +212,34 @@ const MainPage = () => {
         
         {/* 상단 헤더 */}
         <header className="flex justify-between items-center mb-6">
-          {/* 📌 [수정된 프로필 UI] 좌측 프로필 및 내 정보 보기 영역 */}
           <div 
             onClick={handleProfile}
-            className="flex items-center gap-3 cursor-pointer p-1 pr-3 rounded-2xl hover:bg-gray-100/80 transition active:scale-95"
+            className="flex items-center gap-3 cursor-pointer p-1 pr-3 rounded-2xl transition active:scale-95"
           >
-            {/* 프로필 이미지 아이콘 */}
-            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 shrink-0 border border-orange-200">
+            {/*프로필 버튼*/}
+            <div className="w-10 h-10 hover:bg-gray-200 rounded-full flex items-center justify-center">
               <svg 
-                className="w-6 h-6 text-orange-400" 
+                className="w-6 h-6 text-black" 
                 fill="currentColor" 
                 viewBox="0 0 20 20"
               >
                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
               </svg>
             </div>
-
-            {/* 이름, 안내 텍스트, 화살표 */}
-            <div className="flex flex-col text-left">
-              <span className="text-sm font-bold text-gray-800 flex items-center gap-0.5 leading-tight">
-                김모이
-                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-                </svg>
-              </span>
-              <span className="text-[11px] text-gray-400 mt-0.5">내 정보 보기</span>
-            </div>
           </div>
 
+          {/* 알림 버튼*/}
           <div className="flex gap-2">
             <button
-              onClick={handleRefresh}
-              className="text-2xl p-2 hover:bg-gray-200 rounded-full transition active:scale-95"
-            >
-              🔄
-            </button>
-            <button
               onClick={handleNotification}
-              className="text-2xl p-2 hover:bg-gray-200 rounded-full transition active:scale-95"
+              className="relative p-2 hover:bg-gray-200 rounded-full transition active:scale-95 text-black"
             >
-              🔔
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              >
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+              </svg>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full ring-white" />
             </button>
           </div>
         </header>
@@ -270,7 +259,7 @@ const MainPage = () => {
                   onClick={() => setViewMode('month')}
                   className={`px-3 py-1 rounded-lg transition ${
                     viewMode === 'month'
-                      ? 'bg-white text-orange-500 shadow-xs font-bold'
+                      ? 'bg-white text-[#27D55B] shadow-xs font-bold'
                       : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
@@ -280,7 +269,7 @@ const MainPage = () => {
                   onClick={() => setViewMode('week')}
                   className={`px-3 py-1 rounded-lg transition ${
                     viewMode === 'week'
-                      ? 'bg-white text-orange-500 shadow-xs font-bold'
+                      ? 'bg-white text-[#27D55B] shadow-xs font-bold'
                       : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
@@ -310,7 +299,7 @@ const MainPage = () => {
           {viewMode === 'month' ? (
             <>
               {/* 요일 라벨 */}
-              <div className="grid grid-cols-7 text-center text-xs font-semibold text-gray-400 mb-3 py-1">
+              <div className="grid grid-cols-7 text-center text-xs font-semibold text-black mb-3 py-1">
                 <div className="text-red-400">일</div>
                 <div>월</div>
                 <div>화</div>
@@ -344,14 +333,14 @@ const MainPage = () => {
                       key={i}
                       onClick={() => handleDateClick(dateStr)}
                       className={`cursor-pointer py-1 rounded-xl transition ${
-                        isSelected ? 'bg-orange-100/70 font-bold' : ''
+                        isSelected ? 'bg-green-100/70 font-bold' : ''
                       }`}
                     >
-                      <div className={`text-[10px] ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-gray-400'}`}>
+                      <div className={`text-[10px] ${i === 0 ? 'text-[#27D55B]' : i === 6 ? 'text-blue-400' : 'text-gray-400'}`}>
                         {dayNames[i]}
                       </div>
                       <div className={`text-xs font-bold mt-0.5 ${
-                        isToday ? 'text-orange-500 underline' : 'text-gray-700'
+                        isToday ? 'text-[#27D55B] underline' : 'text-gray-700'
                       }`}>
                         {d.getDate()}
                       </div>
@@ -362,7 +351,7 @@ const MainPage = () => {
 
               {/* 타임라인 그리드 (00:00 ~ 24:00 전체 스크롤 가능) */}
               <div className="max-h-80 overflow-y-auto pr-1 relative">
-                <div className="grid grid-cols-8 relative border-t border-gray-50">
+                <div className="grid grid-cols-8 relative border-t border-gray-100">
                   
                   {/* 좌측 시간축 칸 (00:00 ~ 24:00) */}
                   <div className="border-r border-gray-100">
@@ -385,7 +374,7 @@ const MainPage = () => {
                       <div
                         key={colIdx}
                         onClick={() => handleDateClick(dateStr)}
-                        className="relative border-r border-gray-50 last:border-r-0 cursor-pointer"
+                        className="relative border-r border-gray-100 last:border-r-0 cursor-pointer"
                       >
                         {/* 00:00 ~ 24:00 가로 가이드선 (19칸 생성) */}
                         {HOURS.slice(0, 19).map((hour) => (
@@ -419,7 +408,7 @@ const MainPage = () => {
                               style={{
                                 top: `${top}px`,
                                 height: `${height}px`,
-                                backgroundColor: schedule.color || '#F97316',
+                                backgroundColor: schedule.color || '#27D55B',
                               }}
                             >
                               <div className="truncate font-bold">
@@ -444,20 +433,20 @@ const MainPage = () => {
         <section className="mt-6">
           {selectedDateStr ? (
             /* [일정 목록 카드 + 오른쪽에 일정 추가 버튼] */
-            <div className="bg-white rounded-3xl p-5 shadow-xs border border-orange-200">
+            <div className="bg-white rounded-3xl p-5 shadow-xs border">
               <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-orange-500 rounded-full" />
+                  <span className="w-2.5 h-2.5 bg-[#27D55B] rounded-full" />
                   <h3 className="font-bold text-gray-800 text-base">
                     {selectedDateStr} 일정
                   </h3>
                 </div>
 
-                {/* 📌 오른쪽 상단 버튼 그룹: 일정 추가 버튼 & 닫기 버튼 */}
+                {/*오른쪽 상단 버튼 그룹: 일정 추가 버튼 & 닫기 버튼 */}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleAddSchedule}
-                    className="text-xs bg-orange-500 text-white font-semibold px-3 py-1.5 rounded-xl hover:bg-orange-600 transition active:scale-95 shadow-xs"
+                    className="text-xs bg-[#27D55B] text-white font-semibold px-3 py-1.5 rounded-xl hover:bg-[#27D55B] transition active:scale-95 shadow-xs"
                   >
                     + 일정 추가
                   </button>
@@ -483,7 +472,7 @@ const MainPage = () => {
                     >
                       <div
                         className="w-1.5 h-10 rounded-full shrink-0 mt-0.5"
-                        style={{ backgroundColor: schedule.color || '#F97316' }}
+                        style={{ backgroundColor: schedule.color || '#27D55B' }}
                       />
                       <div className="flex-1">
                         <h4 className="font-bold text-gray-800 text-sm">
@@ -511,7 +500,7 @@ const MainPage = () => {
                 <h3 className="font-bold text-gray-800">방 목록</h3>
                 <button
                   onClick={handleAddRoom}
-                  className="text-sm bg-orange-500 text-white px-4 py-1.5 rounded-xl font-medium shadow-md hover:bg-orange-600 transition active:scale-95"
+                  className="text-sm bg-[#27D55B] text-white px-4 py-1.5 rounded-xl font-medium shadow-md hover:bg-[#27D55B] transition active:scale-95"
                 >
                   추가
                 </button>
@@ -521,10 +510,10 @@ const MainPage = () => {
                 {[1, 2, 3].map((item) => (
                   <div
                     key={item}
-                    className="h-16 bg-white rounded-xl shadow-xs border border-gray-100 p-4 flex items-center justify-between hover:border-orange-200 transition cursor-pointer"
+                    className="h-16 bg-white rounded-xl shadow-xs border border-gray-100 p-4 flex items-center justify-between hover:border-[#27D55B] transition cursor-pointer"
                   >
                     <span className="font-semibold text-gray-700">모임 방 {item}</span>
-                    <span className="text-xs text-orange-500 font-medium bg-orange-50 px-2.5 py-1 rounded-lg">
+                    <span className="text-xs text-[#27D55B] font-medium bg-[#27D55B]/10 px-2.5 py-1 rounded-lg">
                       참여 중
                     </span>
                   </div>
