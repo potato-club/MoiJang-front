@@ -5,7 +5,7 @@ import MyPage from './pages/MyPage';
 import NotificationPage from './pages/NotificationPage'; 
 import RoomCreatePage from './pages/RoomCreatePage';
 import RoomJoinPage from './pages/RoomJoinPage';
-import FriendsPage from './pages/FriendsPage';
+import FriendListPage from './pages/FriendLIstPage';
 import ScheduleCreatePage from './pages/ScheduleCreatePage';
 
 function App() {
@@ -19,7 +19,7 @@ function App() {
         <Route path="/notifications" element={<NotificationPage />} />
         <Route path="/room-create" element={<RoomCreatePage />} />
         <Route path="/room-join/:roomId" element={<RoomJoinPage />} />
-        <Route path="/friends" element={<FriendsPage />} />
+        <Route path="/friends" element={<FriendListPage />} />
         <Route path="/schedule-create" element={<ScheduleCreatePage />} />
       </Routes>
     </BrowserRouter>

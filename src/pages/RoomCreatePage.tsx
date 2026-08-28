@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createTeam } from '../api/teamApi';
 
@@ -44,9 +44,9 @@ const RoomCreatePage = () => {
       console.log('방 생성 성공:', result);
       alert(`'${roomName}' 방이 성공적으로 생성되었습니다!`);
       navigate('/main');
-    } catch (error: any) {
+    } catch (error) {
       console.error('방 생성 실패:', error);
-      alert(error?.response?.data?.errorMessage || '방 생성 중 오류가 발생했습니다.');
+      alert((error as { response?: { data?: { errorMessage?: string } } })?.response?.data?.errorMessage || '방 생성 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }

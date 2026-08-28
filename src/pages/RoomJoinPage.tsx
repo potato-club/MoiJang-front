@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const RoomJoinPage = () => {
@@ -27,9 +27,9 @@ const RoomJoinPage = () => {
       
       alert('방에 성공적으로 입장했습니다!');
       navigate(`/room/${roomId || '1'}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('방 입장 실패:', error);
-      alert(error?.response?.data?.errorMessage || '방 입장 중 오류가 발생했습니다.');
+      alert((error as { response?: { data?: { errorMessage?: string } } })?.response?.data?.errorMessage || '방 입장 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMyProfile, type UserProfileResponse } from '../api/userApi';
 
@@ -24,6 +24,9 @@ const MyPage = () => {
 
     fetchProfile();
   }, []);
+
+  const displayName = profile?.name || '사용자';
+  const avartaBgColor= '#27D55B'; 
 
   // 3. 뒤로가기 핸들러
   const handleBack = () => {
@@ -83,16 +86,13 @@ const MyPage = () => {
         {/* 프로필 카드 (중앙 정렬) */}
         <div className="bg-white rounded-3xl p-8 shadow-sm flex flex-col items-center text-center border border-gray-100">
           {/* 아바타 이미지 */}
-          <div className="w-24 h-24 rounded-full bg-emerald-50 border-2 border-emerald-400 flex items-center justify-center overflow-hidden mb-4 shadow-inner">
-            {profile?.profileImageUrl ? (
-              <img
-                src={profile.profileImageUrl}
-                alt="프로필 이미지"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-4xl">👤</span>
-            )}
+          <div className="flex items-center gap-3.5">
+                <div
+                  style={{ backgroundColor: avartaBgColor }}
+                  className="w-11 h-11 rounded-full flex items-center justify-center text-white text-base font-medium shrink-0 select-none shadow-xs"
+                >
+                  {displayName.charAt(0)}
+                </div>
           </div>
 
           {/* 사용자 정보 */}
