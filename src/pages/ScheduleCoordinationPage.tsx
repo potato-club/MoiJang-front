@@ -1,118 +1,186 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface TimeBlock {
-  day: number;
-  start: number;
-  duration: number;
-  count: number;
-}
-
 const ScheduleCoordinationPage = () => {
   const navigate = useNavigate();
 
-  // 임시 데이터 - 나중에 백엔드 API 데이터로 교체
-  const days = [
-    { date: '8/10', day: '월' },
-    { date: '8/11', day: '화' },
-    { date: '8/12', day: '수' },
-    { date: '8/13', day: '목' },
-    { date: '8/14', day: '금' },
-  ];
+  const YEAR = 2026;
 
-  const hours = [
+  const months = Array.from(
+    { length: 12 },
+    (_, index) => index + 1
+  );
+
+  const times = [
     '09:00',
+    '09:30',
     '10:00',
+    '10:30',
     '11:00',
+    '11:30',
     '12:00',
+    '12:30',
     '13:00',
+    '13:30',
     '14:00',
+    '14:30',
     '15:00',
+    '15:30',
     '16:00',
+    '16:30',
     '17:00',
+    '17:30',
     '18:00',
+    '18:30',
+    '19:00',
+    '19:30',
+    '20:00',
+    '20:30',
+    '21:00',
+    '21:30',
+    '22:00',
   ];
 
-  // 여러 명이 가능한 시간 예시
-  // count가 높을수록 많은 사람이 가능한 시간
-  const availableBlocks: TimeBlock[] = [
-    { day: 0, start: 1, duration: 2, count: 2 },
-    { day: 0, start: 4, duration: 2, count: 3 },
-    { day: 0, start: 7, duration: 2, count: 2 },
+  const [selectedMonth, setSelectedMonth] = useState(8);
 
-    { day: 1, start: 0, duration: 2, count: 3 },
-    { day: 1, start: 3, duration: 2, count: 2 },
+  const [selectedDates, setSelectedDates] = useState<number[]>([]);
 
-    { day: 2, start: 1, duration: 3, count: 4 },
-    { day: 2, start: 5, duration: 2, count: 2 },
+  const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
 
-    { day: 3, start: 0, duration: 3, count: 3 },
-    { day: 3, start: 4, duration: 3, count: 4 },
+  // 기존에 저장된 내 일정이 있으면 불러오기
+  useState(() => {
+    const saved = localStorage.getItem('myScheduleAvailability');
 
-    { day: 4, start: 2, duration: 2, count: 2 },
-    { day: 4, start: 6, duration: 2, count: 3 },
-  ];
-
-  const [selectedTime, setSelectedTime] = useState<{
-    day: number;
-    start: number;
-  } | null>(null);
-
-  const [confirmed, setConfirmed] = useState(false);
-
-  const getAvailabilityStyle = (count: number) => {
-    if (count >= 4) {
-      return 'bg-[#27D55B] text-white';
-    }
-
-    if (count === 3) {
-      return 'bg-green-300 text-green-900';
-    }
-
-    return 'bg-green-100 text-green-700';
-  };
-
-  const handleSelectTime = (day: number, start: number) => {
-    if (confirmed) return;
-
-    setSelectedTime({
-      day,
-      start,
-    });
-  };
-
-  const handleConfirm = () => {
-    if (!selectedTime) {
-      alert('확정할 시간을 선택해주세요.');
+    if (!saved) {
       return;
     }
 
-    if (
-      window.confirm(
-        `${days[selectedTime.day].date} ${
-          days[selectedTime.day].day
-        }요일 ${hours[selectedTime.start]}로 확정하시겠습니까?`
-      )
-    ) {
-      // TODO: 추후 백엔드 일정 확정 API 연결
-      setConfirmed(true);
+    try {
+      const schedule = JSON.parse(saved);
+
+      if (schedule.month) {
+        setSelectedMonth(schedule.month);
+      }
+
+      if (schedule.dates) {
+        setSelectedDates(schedule.dates);
+      }
+
+      if (schedule.times) {
+        setSelectedTimes(schedule.times);
+      }
+    } catch {
+      console.log('저장된 일정 불러오기 실패');
+    }
+  });
+
+  const getDaysInMonth = (month: number) => {
+    return new Date(YEAR, month, 0).getDate();
+  };
+
+  const getFirstDay = (month: number) => {
+    return new Date(
+      YEAR,
+      month - 1,
+      1
+    ).getDay();
+  };
+
+  const handleMonthClick = (month: number) => {
+    setSelectedMonth(month);
+
+    // 다른 월을 선택하면 날짜만 초기화
+    setSelectedDates([]);
+  };
+
+  const handleDateClick = (date: number) => {
+    if (selectedDates.includes(date)) {
+      setSelectedDates((prev) =>
+        prev.filter((item) => item !== date)
+      );
+    } else {
+      setSelectedDates((prev) =>
+        [...prev, date].sort((a, b) => a - b)
+      );
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="w-full max-w-md mx-auto">
+  const handleTimeClick = (time: string) => {
+    if (selectedTimes.includes(time)) {
+      setSelectedTimes((prev) =>
+        prev.filter((item) => item !== time)
+      );
+    } else {
+      setSelectedTimes((prev) =>
+        [...prev, time].sort()
+      );
+    }
+  };
 
-        {/* 상단 헤더 */}
-        <header className="relative flex items-center justify-center mb-8">
+  const handleSubmit = () => {
+    if (selectedDates.length === 0) {
+      alert('가능한 날짜를 한 개 이상 선택해주세요.');
+      return;
+    }
+
+    if (selectedTimes.length === 0) {
+      alert('가능한 시간을 한 개 이상 선택해주세요.');
+      return;
+    }
+
+    const sortedDates = [...selectedDates].sort(
+      (a, b) => a - b
+    );
+
+    const sortedTimes = [...selectedTimes].sort();
+
+    const dateText = sortedDates
+      .map((date) => `${selectedMonth}월 ${date}일`)
+      .join(', ');
+
+    const timeText = sortedTimes.join(', ');
+
+    const result = window.confirm(
+      `선택한 일정으로 등록하시겠습니까?\n\n날짜: ${dateText}\n시간: ${timeText}`
+    );
+
+    if (!result) {
+      return;
+    }
+
+    const mySchedule = {
+      year: YEAR,
+      month: selectedMonth,
+      dates: sortedDates,
+      times: sortedTimes,
+    };
+
+    // 현재는 프론트 테스트용 저장
+    // 나중에는 이 부분을 백엔드 POST/PUT API로 교체
+    localStorage.setItem(
+      'myScheduleAvailability',
+      JSON.stringify(mySchedule)
+    );
+
+    alert('일정이 등록되었습니다!');
+
+    navigate('/schedule-overview');
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 px-4 py-8">
+      <div className="mx-auto w-full max-w-md">
+
+        {/* 헤더 */}
+        <header className="relative mb-8 flex items-center justify-center">
           <button
             type="button"
-            onClick={() => navigate(-1)}
-            className="absolute left-0 p-1 text-gray-700 hover:text-black"
+            onClick={() => navigate('/schedule-overview')}
+            className="absolute left-0 flex h-9 w-9 items-center justify-center rounded-full text-gray-700 hover:bg-gray-100"
             aria-label="뒤로가기"
           >
             <svg
-              className="w-6 h-6"
+              className="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -127,194 +195,221 @@ const ScheduleCoordinationPage = () => {
           </button>
 
           <h1 className="text-lg font-bold text-gray-900">
-            일정 조율
+            내 일정 추가
           </h1>
         </header>
 
-        {/* 방 정보 */}
+        {/* 설명 */}
         <section className="mb-6">
-          <p className="text-xs text-gray-400 mb-1">
+          <p className="mb-1 text-xs text-gray-400">
             동아리 정기 모임
           </p>
 
           <h2 className="text-xl font-bold text-gray-900">
-            가능한 시간을 선택해주세요
+            가능한 날짜를 선택해주세요
           </h2>
 
-          <p className="text-xs text-gray-400 mt-2">
-            색이 진할수록 더 많은 인원이 가능한 시간입니다.
+          <p className="mt-2 text-xs leading-5 text-gray-400">
+            참여할 수 있는 날짜와 시간을 모두 선택해주세요.
           </p>
         </section>
 
-        {/* 시간표 */}
-        <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4">
+        <section className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
 
-          {/* 날짜 */}
-          <div className="grid grid-cols-[45px_repeat(5,1fr)] mb-2">
-            <div />
+          {/* 월 선택 */}
+          <div>
+            <h3 className="mb-4 text-sm font-bold text-gray-800">
+              월 선택
+            </h3>
 
-            {days.map((item) => (
-              <div
-                key={item.date}
-                className="text-center"
-              >
-                <p className="text-[10px] text-gray-400">
-                  {item.day}
-                </p>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {months.map((month) => {
+                const selected =
+                  selectedMonth === month;
 
-                <p className="text-xs font-bold text-gray-700">
-                  {item.date}
-                </p>
-              </div>
-            ))}
+                return (
+                  <button
+                    key={month}
+                    type="button"
+                    onClick={() =>
+                      handleMonthClick(month)
+                    }
+                    className={`
+                      h-10 w-12 shrink-0
+                      rounded-xl
+                      text-xs font-bold
+                      transition
+                      ${
+                        selected
+                          ? 'bg-[#27D55B] text-white'
+                          : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                      }
+                    `}
+                  >
+                    {month}월
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* 시간표 본체 */}
-          <div className="grid grid-cols-[45px_repeat(5,1fr)]">
+          <div className="my-6 border-t border-gray-100" />
 
-            {/* 시간 */}
-            <div>
-              {hours.map((hour) => (
-                <div
-                  key={hour}
-                  className="h-12 text-[10px] text-gray-400 flex items-start justify-end pr-2 pt-1"
+          {/* 날짜 선택 */}
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-800">
+                날짜 선택
+              </h3>
+
+              <span className="text-xs font-bold text-[#27D55B]">
+                {selectedMonth}월
+              </span>
+            </div>
+
+            {/* 요일 */}
+            <div className="mb-2 grid grid-cols-7 gap-2 text-center">
+              {[
+                '일',
+                '월',
+                '화',
+                '수',
+                '목',
+                '금',
+                '토',
+              ].map((day, index) => (
+                <span
+                  key={day}
+                  className={`
+                    text-[10px] font-medium
+                    ${
+                      index === 0
+                        ? 'text-red-400'
+                        : index === 6
+                        ? 'text-blue-400'
+                        : 'text-gray-400'
+                    }
+                  `}
                 >
-                  {hour}
-                </div>
+                  {day}
+                </span>
               ))}
             </div>
 
-            {/* 날짜별 칸 */}
-            {days.map((_, dayIndex) => (
-              <div
-                key={dayIndex}
-                className="relative border-l border-gray-100"
-              >
-                {hours.map((_, hourIndex) => {
-                  const block = availableBlocks.find(
-                    (item) =>
-                      item.day === dayIndex &&
-                      item.start === hourIndex
-                  );
+            {/* 달력 */}
+            <div className="grid grid-cols-7 gap-2">
 
-                  const isSelected =
-                    selectedTime?.day === dayIndex &&
-                    selectedTime?.start === hourIndex;
+              {/* 앞쪽 빈칸 */}
+              {Array.from({
+                length: getFirstDay(selectedMonth),
+              }).map((_, index) => (
+                <div key={`empty-${index}`} />
+              ))}
 
-                  return (
-                    <div
-                      key={hourIndex}
-                      className="h-12 border-b border-gray-100 relative"
-                    >
-                      {block && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleSelectTime(
-                              dayIndex,
-                              hourIndex
-                            )
-                          }
-                          className={`
-                            absolute
-                            top-0
-                            left-0.5
-                            right-0.5
-                            rounded-md
-                            flex
-                            items-center
-                            justify-center
-                            transition
-                            ${getAvailabilityStyle(block.count)}
-                            ${
-                              isSelected
-                                ? 'ring-2 ring-black ring-offset-1 z-10'
-                                : ''
-                            }
-                          `}
-                          style={{
-                            height: `${block.duration * 48}px`,
-                          }}
-                        >
-                          <span className="text-[9px] font-bold">
-                            {block.count}명
-                          </span>
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+              {/* 날짜 */}
+              {Array.from(
+                {
+                  length:
+                    getDaysInMonth(selectedMonth),
+                },
+                (_, index) => index + 1
+              ).map((date) => {
+                const selected =
+                  selectedDates.includes(date);
+
+                return (
+                  <button
+                    key={date}
+                    type="button"
+                    onClick={() =>
+                      handleDateClick(date)
+                    }
+                    className={`
+                      aspect-square
+                      rounded-xl
+                      text-xs font-semibold
+                      transition
+                      ${
+                        selected
+                          ? 'bg-[#27D55B] text-white'
+                          : 'text-gray-700 hover:bg-green-50'
+                      }
+                    `}
+                  >
+                    {date}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="my-6 border-t border-gray-100" />
+
+          {/* 시간 선택 */}
+          <div>
+            <h3 className="mb-2 text-sm font-bold text-gray-800">
+              시간 선택
+            </h3>
+
+            <p className="mb-4 text-[11px] text-gray-400">
+              가능한 시간을 모두 선택해주세요.
+            </p>
+
+            <div className="grid grid-cols-4 gap-2">
+              {times.map((time) => {
+                const selected =
+                  selectedTimes.includes(time);
+
+                return (
+                  <button
+                    key={time}
+                    type="button"
+                    onClick={() =>
+                      handleTimeClick(time)
+                    }
+                    className={`
+                      rounded-xl border
+                      py-2.5
+                      text-xs font-semibold
+                      transition
+                      ${
+                        selected
+                          ? 'border-[#27D55B] bg-[#27D55B] text-white'
+                          : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'
+                      }
+                    `}
+                  >
+                    {time}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </section>
 
-        {/* 범례 */}
-        <section className="flex items-center justify-center gap-4 mt-5 text-[11px] text-gray-500">
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-green-100" />
-            적음
-          </div>
+        {/* 선택 현황 */}
+        <p className="mt-4 text-center text-xs text-gray-400">
+          날짜 {selectedDates.length}개 · 시간{' '}
+          {selectedTimes.length}개 선택
+        </p>
 
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-green-300" />
-            보통
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#27D55B]" />
-            많음
-          </div>
-        </section>
-
-        {/* 선택된 시간 */}
-        {selectedTime && (
-          <section className="bg-white rounded-2xl border border-gray-100 p-4 mt-5">
-            <p className="text-xs text-gray-400 mb-1">
-              선택한 시간
-            </p>
-
-            <p className="text-sm font-bold text-gray-800">
-              {days[selectedTime.day].date}{' '}
-              {days[selectedTime.day].day}요일 ·{' '}
-              {hours[selectedTime.start]}
-            </p>
-          </section>
-        )}
-
-        {/* 확정 버튼 */}
+        {/* 등록 버튼 */}
         <button
           type="button"
-          onClick={handleConfirm}
-          disabled={confirmed}
-          className={`
-            w-full mt-6 py-4 rounded-2xl
-            text-white font-bold text-sm
-            transition active:scale-[0.99]
-            ${
-              confirmed
-                ? 'bg-gray-300 cursor-default'
-                : 'bg-[#27D55B] hover:opacity-90'
-            }
-          `}
+          onClick={handleSubmit}
+          className="
+            mt-5 w-full
+            rounded-2xl
+            bg-[#27D55B]
+            py-4
+            text-sm font-bold text-white
+            transition
+            hover:opacity-90
+            active:scale-[0.99]
+          "
         >
-          {confirmed ? '확정 완료' : '시간 확정하기'}
+          내 일정 등록
         </button>
-
-        {/* 확정 메시지 */}
-        {confirmed && selectedTime && (
-          <div className="mt-4 bg-green-50 rounded-2xl p-4 text-center">
-            <p className="text-sm font-bold text-[#27D55B]">
-              일정이 확정되었습니다.
-            </p>
-
-            <p className="text-xs text-gray-500 mt-1">
-              {days[selectedTime.day].date}{' '}
-              {days[selectedTime.day].day}요일{' '}
-              {hours[selectedTime.start]}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

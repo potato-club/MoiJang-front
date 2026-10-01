@@ -7,6 +7,7 @@ import NotificationPage from './pages/NotificationPage';
 import RoomCreatePage from './pages/RoomCreatePage';
 import RoomJoinPage from './pages/RoomJoinPage';
 import ScheduleCoordinationPage from './pages/ScheduleCoordinationPage';
+import ScheduleOverviewPage from './pages/ScheduleOverviewPage';
 
 function App() {
   return (
@@ -18,6 +19,11 @@ function App() {
         <Route path="/notifications" element={<NotificationPage />} />
         <Route path="/room-create" element={<RoomCreatePage />} />
         <Route path="/room-join/:roomId" element={<RoomJoinPage />} />
+
+        <Route
+          path="/schedule-overview"
+          element={<ScheduleOverviewPage />}
+        />
 
         <Route
           path="/schedule-coordination"

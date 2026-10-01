@@ -521,6 +521,7 @@ const MainPage = () => {
                 {[1, 2, 3].map((item) => (
                   <div
                     key={item}
+                   onClick={() => navigate('/schedule-overview')}
                     className="h-16 bg-white rounded-xl shadow-xs border border-gray-100 p-4 flex items-center justify-between hover:border-orange-200 transition cursor-pointer"
                   >
                     <span className="font-semibold text-gray-700">모임 방 {item}</span>
