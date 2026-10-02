@@ -1,183 +1,752 @@
-import { useState } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
+
+type PickerType =
+  | 'startDate'
+  | 'startTime'
+  | 'endDate'
+  | 'endTime'
+  | null;
+
+type RepeatType =
+  | 'weekly'
+  | 'monthly'
+  | 'yearly';
+
+interface DateValue {
+  year: number;
+  month: number;
+  day: number;
+}
+
+interface TimeValue {
+  period: '오전' | '오후';
+  hour: number;
+  minute: number;
+}
+
+const ITEM_HEIGHT = 40;
+const PICKER_PADDING = 80;
+
+const periods: ('오전' | '오후')[] = [
+  '오전',
+  '오후',
+];
+
+const hours = Array.from(
+  { length: 12 },
+  (_, index) => index + 1
+);
+
+const minutes = [
+  0,
+  5,
+  10,
+  15,
+  20,
+  25,
+  30,
+  35,
+  40,
+  45,
+  50,
+  55,
+];
 
 const ScheduleCoordinationPage = () => {
   const navigate = useNavigate();
 
-  const YEAR = 2026;
+  // =========================
+  // 기본 정보
+  // =========================
 
-  const months = Array.from(
-    { length: 12 },
-    (_, index) => index + 1
-  );
+  const [title, setTitle] = useState('');
 
-  const times = [
-    '09:00',
-    '09:30',
-    '10:00',
-    '10:30',
-    '11:00',
-    '11:30',
-    '12:00',
-    '12:30',
-    '13:00',
-    '13:30',
-    '14:00',
-    '14:30',
-    '15:00',
-    '15:30',
-    '16:00',
-    '16:30',
-    '17:00',
-    '17:30',
-    '18:00',
-    '18:30',
-    '19:00',
-    '19:30',
-    '20:00',
-    '20:30',
-    '21:00',
-    '21:30',
-    '22:00',
+  const [startDate, setStartDate] =
+    useState<DateValue>({
+      year: 2026,
+      month: 8,
+      day: 14,
+    });
+
+  const [endDate, setEndDate] =
+    useState<DateValue>({
+      year: 2026,
+      month: 8,
+      day: 14,
+    });
+
+  const [startTime, setStartTime] =
+    useState<TimeValue>({
+      period: '오후',
+      hour: 5,
+      minute: 0,
+    });
+
+  const [endTime, setEndTime] =
+    useState<TimeValue>({
+      period: '오후',
+      hour: 5,
+      minute: 0,
+    });
+
+  const [repeat, setRepeat] =
+    useState<RepeatType>('weekly');
+
+  const [picker, setPicker] =
+    useState<PickerType>(null);
+
+  // =========================
+  // 색상
+  // =========================
+
+  const colors = [
+    '#FF5A4F',
+    '#FFB800',
+    '#10CBB5',
+    '#C84BDD',
   ];
 
-  const [selectedMonth, setSelectedMonth] = useState(8);
+  const [selectedColor, setSelectedColor] =
+    useState('#10CBB5');
 
-  const [selectedDates, setSelectedDates] = useState<number[]>([]);
+  const [
+    showColorPicker,
+    setShowColorPicker,
+  ] = useState(false);
 
-  const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
+  // =========================
+  // 시간 스크롤 ref
+  // =========================
 
-  // 기존에 저장된 내 일정이 있으면 불러오기
-  useState(() => {
-    const saved = localStorage.getItem('myScheduleAvailability');
+  const periodRef =
+    useRef<HTMLDivElement>(null);
 
-    if (!saved) {
-      return;
-    }
+  const hourRef =
+    useRef<HTMLDivElement>(null);
 
-    try {
-      const schedule = JSON.parse(saved);
+  const minuteRef =
+    useRef<HTMLDivElement>(null);
 
-      if (schedule.month) {
-        setSelectedMonth(schedule.month);
-      }
+  // =========================
+  // 날짜 / 시간 표시
+  // =========================
 
-      if (schedule.dates) {
-        setSelectedDates(schedule.dates);
-      }
-
-      if (schedule.times) {
-        setSelectedTimes(schedule.times);
-      }
-    } catch {
-      console.log('저장된 일정 불러오기 실패');
-    }
-  });
-
-  const getDaysInMonth = (month: number) => {
-    return new Date(YEAR, month, 0).getDate();
+  const formatDate = (date: DateValue) => {
+    return `${date.year}. ${date.month}. ${date.day}`;
   };
 
-  const getFirstDay = (month: number) => {
+  const formatTime = (time: TimeValue) => {
+    return `${time.period} ${time.hour}:${String(
+      time.minute
+    ).padStart(2, '0')}`;
+  };
+
+  // =========================
+  // 달력 관련
+  // =========================
+
+  const getDaysInMonth = (
+    year: number,
+    month: number
+  ) => {
     return new Date(
-      YEAR,
+      year,
+      month,
+      0
+    ).getDate();
+  };
+
+  const getFirstDay = (
+    year: number,
+    month: number
+  ) => {
+    return new Date(
+      year,
       month - 1,
       1
     ).getDay();
   };
 
-  const handleMonthClick = (month: number) => {
-    setSelectedMonth(month);
+  // =========================
+  // 시간 선택창을 열었을 때
+  // 현재 선택된 위치로 자동 이동
+  // =========================
 
-    // 다른 월을 선택하면 날짜만 초기화
-    setSelectedDates([]);
-  };
-
-  const handleDateClick = (date: number) => {
-    if (selectedDates.includes(date)) {
-      setSelectedDates((prev) =>
-        prev.filter((item) => item !== date)
-      );
-    } else {
-      setSelectedDates((prev) =>
-        [...prev, date].sort((a, b) => a - b)
-      );
-    }
-  };
-
-  const handleTimeClick = (time: string) => {
-    if (selectedTimes.includes(time)) {
-      setSelectedTimes((prev) =>
-        prev.filter((item) => item !== time)
-      );
-    } else {
-      setSelectedTimes((prev) =>
-        [...prev, time].sort()
-      );
-    }
-  };
-
-  const handleSubmit = () => {
-    if (selectedDates.length === 0) {
-      alert('가능한 날짜를 한 개 이상 선택해주세요.');
+  useEffect(() => {
+    if (
+      picker !== 'startTime' &&
+      picker !== 'endTime'
+    ) {
       return;
     }
 
-    if (selectedTimes.length === 0) {
-      alert('가능한 시간을 한 개 이상 선택해주세요.');
-      return;
-    }
+    const currentTime =
+      picker === 'startTime'
+        ? startTime
+        : endTime;
 
-    const sortedDates = [...selectedDates].sort(
-      (a, b) => a - b
-    );
+    const periodIndex =
+      periods.indexOf(currentTime.period);
 
-    const sortedTimes = [...selectedTimes].sort();
+    const hourIndex =
+      hours.indexOf(currentTime.hour);
 
-    const dateText = sortedDates
-      .map((date) => `${selectedMonth}월 ${date}일`)
-      .join(', ');
+    const minuteIndex =
+      minutes.indexOf(currentTime.minute);
 
-    const timeText = sortedTimes.join(', ');
+    // DOM이 열린 뒤 스크롤 위치 설정
+    requestAnimationFrame(() => {
+      if (periodRef.current) {
+        periodRef.current.scrollTop =
+          periodIndex * ITEM_HEIGHT;
+      }
 
-    const result = window.confirm(
-      `선택한 일정으로 등록하시겠습니까?\n\n날짜: ${dateText}\n시간: ${timeText}`
-    );
+      if (hourRef.current) {
+        hourRef.current.scrollTop =
+          hourIndex * ITEM_HEIGHT;
+      }
 
-    if (!result) {
-      return;
-    }
+      if (minuteRef.current) {
+        minuteRef.current.scrollTop =
+          minuteIndex * ITEM_HEIGHT;
+      }
+    });
+  }, [picker]);
 
-    const mySchedule = {
-      year: YEAR,
-      month: selectedMonth,
-      dates: sortedDates,
-      times: sortedTimes,
+  // =========================
+  // 달력
+  // =========================
+
+  const renderCalendar = (
+    type: 'start' | 'end'
+  ) => {
+    const date =
+      type === 'start'
+        ? startDate
+        : endDate;
+
+    const setDate =
+      type === 'start'
+        ? setStartDate
+        : setEndDate;
+
+    const daysInMonth =
+      getDaysInMonth(
+        date.year,
+        date.month
+      );
+
+    const firstDay =
+      getFirstDay(
+        date.year,
+        date.month
+      );
+
+    const moveMonth = (
+      amount: number
+    ) => {
+      let newYear = date.year;
+      let newMonth =
+        date.month + amount;
+
+      if (newMonth < 1) {
+        newMonth = 12;
+        newYear -= 1;
+      }
+
+      if (newMonth > 12) {
+        newMonth = 1;
+        newYear += 1;
+      }
+
+      setDate({
+        year: newYear,
+        month: newMonth,
+        day: 1,
+      });
     };
 
-    // 현재는 프론트 테스트용 저장
-    // 나중에는 이 부분을 백엔드 POST/PUT API로 교체
-    localStorage.setItem(
-      'myScheduleAvailability',
-      JSON.stringify(mySchedule)
+    return (
+      <div className="mt-4">
+
+        {/* 달력 월 */}
+        <div className="mb-4 flex items-center justify-between px-2">
+
+          <button
+            type="button"
+            onClick={() =>
+              moveMonth(-1)
+            }
+            className="p-1 text-gray-400"
+          >
+            ‹
+          </button>
+
+          <p className="text-xs font-semibold text-gray-700">
+            {date.year}년 {date.month}월
+          </p>
+
+          <button
+            type="button"
+            onClick={() =>
+              moveMonth(1)
+            }
+            className="p-1 text-gray-400"
+          >
+            ›
+          </button>
+
+        </div>
+
+        {/* 요일 */}
+        <div className="mb-3 grid grid-cols-7 text-center">
+
+          {[
+            '일',
+            '월',
+            '화',
+            '수',
+            '목',
+            '금',
+            '토',
+          ].map((day, index) => (
+            <div
+              key={day}
+              className={`text-[10px] ${
+                index === 0
+                  ? 'text-red-400'
+                  : index === 6
+                  ? 'text-blue-400'
+                  : 'text-gray-400'
+              }`}
+            >
+              {day}
+            </div>
+          ))}
+
+        </div>
+
+        {/* 날짜 */}
+        <div className="grid grid-cols-7 gap-y-3 text-center">
+
+          {Array.from({
+            length: firstDay,
+          }).map((_, index) => (
+            <div
+              key={`empty-${index}`}
+            />
+          ))}
+
+          {Array.from(
+            {
+              length: daysInMonth,
+            },
+            (_, index) => index + 1
+          ).map((day) => {
+            const selected =
+              date.day === day;
+
+            return (
+              <button
+                key={day}
+                type="button"
+                onClick={() => {
+                  setDate({
+                    ...date,
+                    day,
+                  });
+
+                  setPicker(null);
+                }}
+                className={`
+                  mx-auto
+                  flex h-8 w-8
+                  items-center
+                  justify-center
+                  rounded-full
+                  text-xs
+                  transition
+                  ${
+                    selected
+                      ? 'bg-[#252525] text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }
+                `}
+              >
+                {day}
+              </button>
+            );
+          })}
+
+        </div>
+      </div>
+    );
+  };
+
+  // =========================
+  // 시간 자동 선택
+  // =========================
+
+  const handleTimeScroll = (
+    element: HTMLDivElement,
+    values:
+      | string[]
+      | number[],
+    valueType:
+      | 'period'
+      | 'hour'
+      | 'minute',
+    type: 'start' | 'end'
+  ) => {
+    const index = Math.round(
+      element.scrollTop /
+        ITEM_HEIGHT
     );
 
-    alert('일정이 등록되었습니다!');
+    const safeIndex = Math.max(
+      0,
+      Math.min(
+        index,
+        values.length - 1
+      )
+    );
 
-    navigate('/schedule-overview');
+    const selectedValue =
+      values[safeIndex];
+
+    if (type === 'start') {
+      setStartTime((prev) => {
+        if (
+          valueType === 'period'
+        ) {
+          return {
+            ...prev,
+            period:
+              selectedValue as
+                | '오전'
+                | '오후',
+          };
+        }
+
+        if (
+          valueType === 'hour'
+        ) {
+          return {
+            ...prev,
+            hour:
+              selectedValue as number,
+          };
+        }
+
+        return {
+          ...prev,
+          minute:
+            selectedValue as number,
+        };
+      });
+    } else {
+      setEndTime((prev) => {
+        if (
+          valueType === 'period'
+        ) {
+          return {
+            ...prev,
+            period:
+              selectedValue as
+                | '오전'
+                | '오후',
+          };
+        }
+
+        if (
+          valueType === 'hour'
+        ) {
+          return {
+            ...prev,
+            hour:
+              selectedValue as number,
+          };
+        }
+
+        return {
+          ...prev,
+          minute:
+            selectedValue as number,
+        };
+      });
+    }
+  };
+
+  // =========================
+  // 시간 휠
+  // =========================
+
+  const renderTimePicker = (
+    type: 'start' | 'end'
+  ) => {
+    const time =
+      type === 'start'
+        ? startTime
+        : endTime;
+
+    return (
+      <div
+        className="
+          relative mt-2
+          h-[200px]
+          overflow-hidden
+        "
+      >
+
+        {/* 가운데 회색 선택 영역 */}
+        <div
+          className="
+            pointer-events-none
+            absolute
+            left-0 right-0
+            top-1/2
+            z-0
+            h-10
+            -translate-y-1/2
+            rounded-lg
+            bg-[#F3F3F3]
+          "
+        />
+
+        <div className="relative z-10 grid h-full grid-cols-3">
+
+          {/* 오전 / 오후 */}
+          <div
+            ref={periodRef}
+            onScroll={(e) =>
+              handleTimeScroll(
+                e.currentTarget,
+                periods,
+                'period',
+                type
+              )
+            }
+            className="
+              h-full
+              snap-y
+              snap-mandatory
+              overflow-y-auto
+              py-[80px]
+              text-center
+              [scrollbar-width:none]
+              [&::-webkit-scrollbar]:hidden
+            "
+          >
+            {periods.map(
+              (period) => (
+                <div
+                  key={period}
+                  className={`
+                    flex h-10
+                    snap-center
+                    items-center
+                    justify-center
+                    text-sm
+                    transition
+                    ${
+                      time.period ===
+                      period
+                        ? 'font-medium text-gray-900'
+                        : 'text-gray-300'
+                    }
+                  `}
+                >
+                  {period}
+                </div>
+              )
+            )}
+          </div>
+
+          {/* 시 */}
+          <div
+            ref={hourRef}
+            onScroll={(e) =>
+              handleTimeScroll(
+                e.currentTarget,
+                hours,
+                'hour',
+                type
+              )
+            }
+            className="
+              h-full
+              snap-y
+              snap-mandatory
+              overflow-y-auto
+              py-[80px]
+              text-center
+              [scrollbar-width:none]
+              [&::-webkit-scrollbar]:hidden
+            "
+          >
+            {hours.map((hour) => (
+              <div
+                key={hour}
+                className={`
+                  flex h-10
+                  snap-center
+                  items-center
+                  justify-center
+                  text-sm
+                  transition
+                  ${
+                    time.hour === hour
+                      ? 'font-medium text-gray-900'
+                      : 'text-gray-300'
+                  }
+                `}
+              >
+                {hour}
+              </div>
+            ))}
+          </div>
+
+          {/* 분 */}
+          <div
+            ref={minuteRef}
+            onScroll={(e) =>
+              handleTimeScroll(
+                e.currentTarget,
+                minutes,
+                'minute',
+                type
+              )
+            }
+            className="
+              h-full
+              snap-y
+              snap-mandatory
+              overflow-y-auto
+              py-[80px]
+              text-center
+              [scrollbar-width:none]
+              [&::-webkit-scrollbar]:hidden
+            "
+          >
+            {minutes.map(
+              (minute) => (
+                <div
+                  key={minute}
+                  className={`
+                    flex h-10
+                    snap-center
+                    items-center
+                    justify-center
+                    text-sm
+                    transition
+                    ${
+                      time.minute ===
+                      minute
+                        ? 'font-medium text-gray-900'
+                        : 'text-gray-300'
+                    }
+                  `}
+                >
+                  {String(
+                    minute
+                  ).padStart(
+                    2,
+                    '0'
+                  )}
+                </div>
+              )
+            )}
+          </div>
+
+        </div>
+      </div>
+    );
+  };
+
+  // =========================
+  // 일정 생성
+  // =========================
+
+  const handleCreate = () => {
+    if (!title.trim()) {
+      alert(
+        '제목을 입력해주세요.'
+      );
+      return;
+    }
+
+    const schedule = {
+      title: title.trim(),
+      color: selectedColor,
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+      repeat,
+    };
+
+    // 프론트 테스트용 저장
+    localStorage.setItem(
+      'roomSchedule',
+      JSON.stringify(schedule)
+    );
+
+    console.log(
+      '생성된 일정:',
+      schedule
+    );
+
+    alert(
+      '일정이 생성되었습니다!'
+    );
+
+    navigate(
+      '/schedule-overview'
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
-      <div className="mx-auto w-full max-w-md">
+    <div className="min-h-screen bg-white">
 
+      <div
+        className="
+          mx-auto
+          flex min-h-screen
+          w-full max-w-md
+          flex-col
+          bg-white
+          px-5 py-6
+        "
+      >
+
+        {/* ================= */}
         {/* 헤더 */}
-        <header className="relative mb-8 flex items-center justify-center">
+        {/* ================= */}
+
+        <header
+          className="
+            relative mb-8
+            flex items-center
+            justify-center
+          "
+        >
           <button
             type="button"
-            onClick={() => navigate('/schedule-overview')}
-            className="absolute left-0 flex h-9 w-9 items-center justify-center rounded-full text-gray-700 hover:bg-gray-100"
-            aria-label="뒤로가기"
+            onClick={() =>
+              navigate(-1)
+            }
+            className="
+              absolute left-0
+              flex h-9 w-9
+              items-center
+              justify-center
+              text-gray-700
+            "
           >
             <svg
               className="h-5 w-5"
@@ -188,229 +757,473 @@ const ScheduleCoordinationPage = () => {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
+                strokeWidth={1.8}
                 d="M15 19l-7-7 7-7"
               />
             </svg>
           </button>
 
-          <h1 className="text-lg font-bold text-gray-900">
-            내 일정 추가
+          <h1 className="text-base font-bold text-gray-900">
+            일정 추가
           </h1>
         </header>
 
-        {/* 설명 */}
-        <section className="mb-6">
-          <p className="mb-1 text-xs text-gray-400">
-            동아리 정기 모임
+        {/* ================= */}
+        {/* 제목 */}
+        {/* ================= */}
+
+        <div className="relative mb-8">
+
+          <input
+            type="text"
+            value={title}
+            onChange={(e) =>
+              setTitle(
+                e.target.value
+              )
+            }
+            placeholder="제목을 입력해주세요"
+            className="
+              w-full
+              rounded-xl
+              border
+              border-gray-200
+              bg-white
+              px-4 py-4
+              pr-12
+              text-xs
+              text-gray-800
+              outline-none
+              placeholder:text-gray-300
+              focus:border-[#27D55B]
+            "
+          />
+
+          <button
+            type="button"
+            onClick={() =>
+              setShowColorPicker(
+                true
+              )
+            }
+            className="
+              absolute
+              right-4
+              top-1/2
+              h-5 w-5
+              -translate-y-1/2
+              rounded-full
+            "
+            style={{
+              backgroundColor:
+                selectedColor,
+            }}
+          />
+
+        </div>
+
+        {/* ================= */}
+        {/* 시작 */}
+        {/* ================= */}
+
+        <section className="mb-7">
+
+          <p className="mb-3 text-xs font-bold text-gray-800">
+            시작
           </p>
 
-          <h2 className="text-xl font-bold text-gray-900">
-            가능한 날짜를 선택해주세요
-          </h2>
+          <div className="grid grid-cols-2 gap-3">
 
-          <p className="mt-2 text-xs leading-5 text-gray-400">
-            참여할 수 있는 날짜와 시간을 모두 선택해주세요.
+            {/* 시작 날짜 */}
+            <button
+              type="button"
+              onClick={() =>
+                setPicker(
+                  picker ===
+                    'startDate'
+                    ? null
+                    : 'startDate'
+                )
+              }
+              className={`
+                rounded-xl
+                border
+                px-3 py-3.5
+                text-xs
+                ${
+                  picker ===
+                  'startDate'
+                    ? 'border-[#27D55B] bg-green-50 text-[#27D55B]'
+                    : 'border-gray-200 bg-white text-gray-500'
+                }
+              `}
+            >
+              {formatDate(
+                startDate
+              )}
+            </button>
+
+            {/* 시작 시간 */}
+            <button
+              type="button"
+              onClick={() =>
+                setPicker(
+                  picker ===
+                    'startTime'
+                    ? null
+                    : 'startTime'
+                )
+              }
+              className={`
+                rounded-xl
+                border
+                px-3 py-3.5
+                text-xs
+                ${
+                  picker ===
+                  'startTime'
+                    ? 'border-[#27D55B] bg-green-50 text-[#27D55B]'
+                    : 'border-gray-200 bg-white text-gray-500'
+                }
+              `}
+            >
+              {formatTime(
+                startTime
+              )}
+            </button>
+
+          </div>
+
+          {picker ===
+            'startDate' &&
+            renderCalendar(
+              'start'
+            )}
+
+          {picker ===
+            'startTime' &&
+            renderTimePicker(
+              'start'
+            )}
+
+        </section>
+
+        {/* ================= */}
+        {/* 종료 */}
+        {/* ================= */}
+
+        <section className="mb-7">
+
+          <p className="mb-3 text-xs font-bold text-gray-800">
+            종료
           </p>
+
+          <div className="grid grid-cols-2 gap-3">
+
+            {/* 종료 날짜 */}
+            <button
+              type="button"
+              onClick={() =>
+                setPicker(
+                  picker ===
+                    'endDate'
+                    ? null
+                    : 'endDate'
+                )
+              }
+              className={`
+                rounded-xl
+                border
+                px-3 py-3.5
+                text-xs
+                ${
+                  picker ===
+                  'endDate'
+                    ? 'border-[#27D55B] bg-green-50 text-[#27D55B]'
+                    : 'border-gray-200 bg-white text-gray-500'
+                }
+              `}
+            >
+              {formatDate(
+                endDate
+              )}
+            </button>
+
+            {/* 종료 시간 */}
+            <button
+              type="button"
+              onClick={() =>
+                setPicker(
+                  picker ===
+                    'endTime'
+                    ? null
+                    : 'endTime'
+                )
+              }
+              className={`
+                rounded-xl
+                border
+                px-3 py-3.5
+                text-xs
+                ${
+                  picker ===
+                  'endTime'
+                    ? 'border-[#27D55B] bg-green-50 text-[#27D55B]'
+                    : 'border-gray-200 bg-white text-gray-500'
+                }
+              `}
+            >
+              {formatTime(
+                endTime
+              )}
+            </button>
+
+          </div>
+
+          {picker ===
+            'endDate' &&
+            renderCalendar(
+              'end'
+            )}
+
+          {picker ===
+            'endTime' &&
+            renderTimePicker(
+              'end'
+            )}
+
         </section>
 
-        <section className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
+        {/* ================= */}
+        {/* 반복 */}
+        {/* ================= */}
 
-          {/* 월 선택 */}
-          <div>
-            <h3 className="mb-4 text-sm font-bold text-gray-800">
-              월 선택
-            </h3>
+        <section className="mb-7">
 
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {months.map((month) => {
-                const selected =
-                  selectedMonth === month;
+          <p className="mb-3 text-xs font-bold text-gray-800">
+            반복
+          </p>
 
-                return (
-                  <button
-                    key={month}
-                    type="button"
-                    onClick={() =>
-                      handleMonthClick(month)
-                    }
-                    className={`
-                      h-10 w-12 shrink-0
-                      rounded-xl
-                      text-xs font-bold
-                      transition
-                      ${
-                        selected
-                          ? 'bg-[#27D55B] text-white'
-                          : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
-                      }
-                    `}
-                  >
-                    {month}월
-                  </button>
-                );
-              })}
-            </div>
+          <div className="grid grid-cols-3 gap-3">
+
+            <button
+              type="button"
+              onClick={() =>
+                setRepeat(
+                  'weekly'
+                )
+              }
+              className={`
+                rounded-xl
+                border
+                py-3
+                text-xs
+                ${
+                  repeat ===
+                  'weekly'
+                    ? 'border-[#27D55B] bg-green-50 text-[#27D55B]'
+                    : 'border-gray-200 bg-white text-gray-500'
+                }
+              `}
+            >
+              매주
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setRepeat(
+                  'monthly'
+                )
+              }
+              className={`
+                rounded-xl
+                border
+                py-3
+                text-xs
+                ${
+                  repeat ===
+                  'monthly'
+                    ? 'border-[#27D55B] bg-green-50 text-[#27D55B]'
+                    : 'border-gray-200 bg-white text-gray-500'
+                }
+              `}
+            >
+              매월
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setRepeat(
+                  'yearly'
+                )
+              }
+              className={`
+                rounded-xl
+                border
+                py-3
+                text-xs
+                ${
+                  repeat ===
+                  'yearly'
+                    ? 'border-[#27D55B] bg-green-50 text-[#27D55B]'
+                    : 'border-gray-200 bg-white text-gray-500'
+                }
+              `}
+            >
+              매년
+            </button>
+
           </div>
 
-          <div className="my-6 border-t border-gray-100" />
-
-          {/* 날짜 선택 */}
-          <div>
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-gray-800">
-                날짜 선택
-              </h3>
-
-              <span className="text-xs font-bold text-[#27D55B]">
-                {selectedMonth}월
-              </span>
-            </div>
-
-            {/* 요일 */}
-            <div className="mb-2 grid grid-cols-7 gap-2 text-center">
-              {[
-                '일',
-                '월',
-                '화',
-                '수',
-                '목',
-                '금',
-                '토',
-              ].map((day, index) => (
-                <span
-                  key={day}
-                  className={`
-                    text-[10px] font-medium
-                    ${
-                      index === 0
-                        ? 'text-red-400'
-                        : index === 6
-                        ? 'text-blue-400'
-                        : 'text-gray-400'
-                    }
-                  `}
-                >
-                  {day}
-                </span>
-              ))}
-            </div>
-
-            {/* 달력 */}
-            <div className="grid grid-cols-7 gap-2">
-
-              {/* 앞쪽 빈칸 */}
-              {Array.from({
-                length: getFirstDay(selectedMonth),
-              }).map((_, index) => (
-                <div key={`empty-${index}`} />
-              ))}
-
-              {/* 날짜 */}
-              {Array.from(
-                {
-                  length:
-                    getDaysInMonth(selectedMonth),
-                },
-                (_, index) => index + 1
-              ).map((date) => {
-                const selected =
-                  selectedDates.includes(date);
-
-                return (
-                  <button
-                    key={date}
-                    type="button"
-                    onClick={() =>
-                      handleDateClick(date)
-                    }
-                    className={`
-                      aspect-square
-                      rounded-xl
-                      text-xs font-semibold
-                      transition
-                      ${
-                        selected
-                          ? 'bg-[#27D55B] text-white'
-                          : 'text-gray-700 hover:bg-green-50'
-                      }
-                    `}
-                  >
-                    {date}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="my-6 border-t border-gray-100" />
-
-          {/* 시간 선택 */}
-          <div>
-            <h3 className="mb-2 text-sm font-bold text-gray-800">
-              시간 선택
-            </h3>
-
-            <p className="mb-4 text-[11px] text-gray-400">
-              가능한 시간을 모두 선택해주세요.
-            </p>
-
-            <div className="grid grid-cols-4 gap-2">
-              {times.map((time) => {
-                const selected =
-                  selectedTimes.includes(time);
-
-                return (
-                  <button
-                    key={time}
-                    type="button"
-                    onClick={() =>
-                      handleTimeClick(time)
-                    }
-                    className={`
-                      rounded-xl border
-                      py-2.5
-                      text-xs font-semibold
-                      transition
-                      ${
-                        selected
-                          ? 'border-[#27D55B] bg-[#27D55B] text-white'
-                          : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'
-                      }
-                    `}
-                  >
-                    {time}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </section>
 
-        {/* 선택 현황 */}
-        <p className="mt-4 text-center text-xs text-gray-400">
-          날짜 {selectedDates.length}개 · 시간{' '}
-          {selectedTimes.length}개 선택
-        </p>
+        {/* ================= */}
+        {/* 생성하기 */}
+        {/* ================= */}
 
-        {/* 등록 버튼 */}
-        <button
-          type="button"
-          onClick={handleSubmit}
+        <div className="mt-auto pt-8">
+
+          <button
+            type="button"
+            onClick={
+              handleCreate
+            }
+            className="
+              w-full
+              rounded-xl
+              bg-[#27D55B]
+              py-4
+              text-sm
+              font-bold
+              text-white
+              transition
+              hover:opacity-90
+              active:scale-[0.99]
+            "
+          >
+            생성하기
+          </button>
+
+        </div>
+
+      </div>
+
+      {/* ================= */}
+      {/* 색상 선택 */}
+      {/* ================= */}
+
+      {showColorPicker && (
+        <div
           className="
-            mt-5 w-full
-            rounded-2xl
-            bg-[#27D55B]
-            py-4
-            text-sm font-bold text-white
-            transition
-            hover:opacity-90
-            active:scale-[0.99]
+            fixed inset-0
+            z-50
+            flex items-end
+            justify-center
+            bg-black/30
           "
         >
-          내 일정 등록
-        </button>
-      </div>
+          <div
+            className="
+              w-full
+              max-w-md
+              rounded-t-[28px]
+              bg-white
+              px-6
+              pb-8
+              pt-6
+            "
+          >
+
+            {/* 손잡이 */}
+            <div className="mb-6 flex justify-center">
+              <div className="h-1 w-10 rounded-full bg-gray-200" />
+            </div>
+
+            <p className="mb-7 text-center text-sm font-bold text-gray-900">
+              색상 선택
+            </p>
+
+            <div className="mb-8 flex justify-center gap-7">
+
+              {colors.map(
+                (color) => {
+                  const selected =
+                    selectedColor ===
+                    color;
+
+                  return (
+                    <button
+                      key={
+                        color
+                      }
+                      type="button"
+                      onClick={() =>
+                        setSelectedColor(
+                          color
+                        )
+                      }
+                      className="
+                        flex
+                        h-12 w-12
+                        items-center
+                        justify-center
+                        rounded-full
+                      "
+                      style={{
+                        backgroundColor:
+                          color,
+                      }}
+                    >
+                      {selected && (
+                        <svg
+                          className="h-5 w-5 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={
+                              3
+                            }
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                }
+              )}
+
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowColorPicker(
+                  false
+                )
+              }
+              className="
+                w-full
+                rounded-xl
+                bg-[#27D55B]
+                py-4
+                text-sm
+                font-bold
+                text-white
+              "
+            >
+              확인
+            </button>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
